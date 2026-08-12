@@ -315,6 +315,26 @@ jobs:
           fi
 
           mapfile -d '' assets < <(find release-assets -type f -print0)
-          gh release upload "$TAG" "${assets[@]}" --clobber
+          for asset in "${assets[@]}"; do
+            name=$(basename "$asset")
+            encoded_name=$(jq -rn --arg value "$name" '$value|@uri')
+            echo "Uploading $name to draft release $RELEASE_ID."
+            curl --fail --silent --show-error --retry 3 \
+              --request POST \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              --header "X-GitHub-Api-Version: 2022-11-28" \
+              --header "Content-Type: application/octet-stream" \
+              --data-binary "@$asset" \
+              "https://uploads.github.com/repos/$GH_REPO/releases/$RELEASE_ID/assets?name=$encoded_name" \
+              >/dev/null
+          done
+
+          uploaded_count=$(gh api "repos/$GH_REPO/releases/$RELEASE_ID/assets" --jq 'length')
+          if [[ "$uploaded_count" -lt "${#assets[@]}" ]]; then
+            echo "::error::Only $uploaded_count of ${#assets[@]} assets are present on the release."
+            exit 1
+          fi
+
           gh api --method PATCH "repos/$GH_REPO/releases/$RELEASE_ID" -F draft=false >/dev/null
-          echo "Published $TAG with ${#assets[@]} assets."
+          echo "Published $TAG with $uploaded_count assets."
