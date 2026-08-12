@@ -306,10 +306,11 @@ jobs:
             fi
           done
 
-          current_id=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq '.id')
-          current_draft=$(gh api "repos/$GH_REPO/releases/$RELEASE_ID" --jq '.draft')
-          if [[ "$current_id" != "$RELEASE_ID" || "$current_draft" != "true" ]]; then
-            echo "::error::Release identity or draft state changed; refusing to publish."
+          release=$(gh api "repos/$GH_REPO/releases/$RELEASE_ID")
+          current_tag=$(jq -r '.tag_name' <<<"$release")
+          current_draft=$(jq -r '.draft' <<<"$release")
+          if [[ "$current_tag" != "$TAG" || "$current_draft" != "true" ]]; then
+            echo "::error::Release tag or draft state changed; refusing to publish."
             exit 1
           fi
 
