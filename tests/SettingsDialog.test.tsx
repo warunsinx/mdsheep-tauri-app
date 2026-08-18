@@ -46,6 +46,7 @@ describe("Settings dialog", () => {
     expect(screen.getByRole("slider", { name: "Editor font size" }).closest('[data-slot="slider"]')).not.toBeNull();
     expect(screen.getByRole("combobox", { name: "Line spacing" })).toHaveAttribute("data-slot", "select-trigger");
     expect(screen.getByRole("switch", { name: "Word wrap" })).toHaveAttribute("data-slot", "switch");
+    expect(screen.queryByRole("switch", { name: "Show word and line stats" })).not.toBeInTheDocument();
   });
 
   it("offers clickable font-size snap points across the expanded ranges", async () => {
@@ -76,7 +77,6 @@ describe("Settings dialog", () => {
     fireEvent.click(screen.getByRole("option", { name: "Relaxed" }));
     await user.click(screen.getByRole("switch", { name: "Word wrap" }));
     await user.click(screen.getByRole("switch", { name: "Spellcheck" }));
-    await user.click(screen.getByRole("switch", { name: "Show word and line stats" }));
 
     expect(screen.getByText("18 px")).toBeInTheDocument();
     expect(screen.getByText("17 px")).toBeInTheDocument();
@@ -93,7 +93,7 @@ describe("Settings dialog", () => {
       lineHeight: "relaxed",
       wordWrap: false,
       spellcheck: false,
-      showStats: false,
+      showStats: true,
     });
   });
 

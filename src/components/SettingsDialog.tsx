@@ -88,7 +88,6 @@ export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }
                 <div className="overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50/70 px-3 dark:border-neutral-800 dark:bg-neutral-900/60">
                   <SwitchSetting label="Word wrap" description="Keep long lines inside the editor pane." checked={settings.wordWrap} onChange={(wordWrap) => onChange({ wordWrap })} />
                   <SwitchSetting label="Spellcheck" description="Use your system spelling suggestions." checked={settings.spellcheck} onChange={(spellcheck) => onChange({ spellcheck })} />
-                  <SwitchSetting label="Show word and line stats" description="Display document counts in the toolbar." checked={settings.showStats} onChange={(showStats) => onChange({ showStats })} />
                 </div>
               </section>
             </div>

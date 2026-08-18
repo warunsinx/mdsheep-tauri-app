@@ -10,25 +10,17 @@ interface EditorPaneProps {
 }
 
 export const EditorPane = memo(function EditorPane({ value, onChange, settings, collapsed = false, onReopen }: EditorPaneProps) {
-  const words = value.trim() ? value.trim().split(/\s+/).length : 0;
-  const lines = value.split("\n").length;
-
   return (
     <section id="edit-panel" aria-label="Markdown source" className={`editor-pane flex min-h-0 flex-1 flex-col bg-neutral-50/50 dark:bg-neutral-950${collapsed ? " pane-collapsed" : ""}`}>
       <div className={`pane-content-shell${collapsed ? " pane-content-shell-collapsed" : ""}`} aria-hidden={collapsed}>
-        <div className="pane-heading">
-          <span className="pane-heading-title">Markdown</span>
-          {settings.showStats && <span id="document-count" className="pane-heading-meta font-normal text-neutral-600 dark:text-neutral-400">
-            {words} {words === 1 ? "word" : "words"} · {lines} {lines === 1 ? "line" : "lines"}
-          </span>}
-        </div>
+        <div className="pane-heading"><span className="pane-heading-title">Markdown</span></div>
         <label htmlFor="markdown-editor" className="sr-only">Markdown editor</label>
         <textarea
           id="markdown-editor"
           data-pane-content="editor"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          aria-describedby={settings.showStats ? "document-count" : undefined}
+
           tabIndex={collapsed ? -1 : undefined}
           spellCheck={settings.spellcheck}
           wrap={settings.wordWrap ? "soft" : "off"}

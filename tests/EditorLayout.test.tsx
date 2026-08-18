@@ -101,20 +101,21 @@ describe("EditorLayout mobile pane controls", () => {
     expect(screen.getByRole("radio", { name: "Preview" })).not.toBeChecked();
   });
 
-  it("provides structural heading hooks and explicit pane overflow CSS", () => {
+  it("keeps pane title bars free of live and document-stat metadata", () => {
     renderEditor();
 
     expect(document.querySelector(".editor-pane .pane-heading-title")).toHaveTextContent("Markdown");
-    expect(document.querySelector("#document-count")).toHaveClass("pane-heading-meta");
     expect(document.querySelector(".preview-pane .pane-heading-title")).toHaveTextContent("Preview");
-    expect(screen.getByText("Live")).toHaveClass("pane-heading-meta");
+    expect(document.querySelector("#document-count")).not.toBeInTheDocument();
+    expect(screen.queryByText("Live")).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "Show word and line stats" })).not.toBeInTheDocument();
 
     const css = readFileSync("src/globals.css", "utf8");
     expect(css).toMatch(/\.pane-layout\s*\{[\s\S]*?overflow:\s*hidden/);
     expect(css).toMatch(/\.editor-pane,\s*\.preview-pane\s*\{[\s\S]*?min-width:\s*0[\s\S]*?min-height:\s*0[\s\S]*?height:\s*100%[\s\S]*?overflow:\s*hidden/);
     expect(css).toMatch(/\.editor-scroll,\s*\.preview-scroll\s*\{[\s\S]*?overflow-y:\s*auto[\s\S]*?overscroll-behavior:\s*contain[\s\S]*?-webkit-overflow-scrolling:\s*touch/);
     expect(css).toMatch(/\.editor-pane,\s*\.preview-pane\s*\{[\s\S]*?container-type:\s*inline-size/);
-    expect(css).toMatch(/@container\s*\(max-width:\s*340px\)[\s\S]*?\.pane-heading-meta\s*\{[\s\S]*?display:\s*none/);
+    expect(css).toMatch(/@container\s*\(max-width:\s*340px\)[\s\S]*?\.pane-heading\s*\{[\s\S]*?justify-content:\s*center/);
     expect(css).toMatch(/\.pane-layout\s*\{[\s\S]*?transition:\s*grid-template-columns/);
     expect(css).toMatch(/\.pane-layout\.pane-is-dragging\s*\{[\s\S]*?transition:\s*none/);
   });

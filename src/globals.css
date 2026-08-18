@@ -169,7 +169,6 @@ button { cursor: pointer; }
 @container (max-width: 340px) {
   .pane-heading { justify-content: center; padding-inline: .75rem; }
   .pane-heading-title { text-align: center; }
-  .pane-heading-meta { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
