@@ -22,7 +22,7 @@ export function OpenButton({ onOpen }: { onOpen: (markdown: string) => void }) {
         <FolderOpen className="size-4" aria-hidden="true" />
         <span className="hidden sm:inline">Open</span>
       </button>
-      {error ? <span className="sr-only" role="alert">{error}</span> : null}
+      {error ? <span className="file-action-error" role="alert">{error}</span> : null}
     </>
   );
 }

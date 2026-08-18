@@ -40,7 +40,7 @@ npm install
 npm run tauri dev
 ```
 
-The frontend alone is available with `npm run dev` at `http://127.0.0.1:5173`. Native Open, Export, and external-link operations require the Tauri runtime.
+The frontend alone is available with `npm run dev` at `http://127.0.0.1:5173`. In the browser, Open uses the file picker and Export downloads a Markdown file; in Tauri, those actions use native operating-system dialogs.
 
 ## Verification
 

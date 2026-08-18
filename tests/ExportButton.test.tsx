@@ -23,4 +23,13 @@ describe("ExportButton", () => {
   it("keeps the dated export filename", () => {
     expect(defaultExportName(new Date(2026, 7, 11))).toBe("document-2026-08-11.md");
   });
+
+  it("reports export failures accessibly", async () => {
+    mockedSave.mockRejectedValue(new Error("download blocked"));
+    render(<ExportButton markdown="# Draft" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Export current Markdown" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("download blocked");
+  });
 });
