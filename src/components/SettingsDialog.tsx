@@ -66,15 +66,11 @@ export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }
         <div className="settings-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) cancel(); }}>
           <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="settings-dialog">
             <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
-              <div><h2 id={titleId} className="text-lg font-semibold">Settings</h2><p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">Tune your writing space.</p></div>
+              <h2 id={titleId} className="text-lg font-semibold">Settings</h2>
               <button type="button" className="icon-button" aria-label="Close settings" onClick={cancel}><X className="size-4" aria-hidden="true" /></button>
             </div>
             <div className="space-y-6 overflow-y-auto px-5 py-5">
-              <section aria-labelledby={`${titleId}-type`} className="space-y-5">
-                <div>
-                  <h3 id={`${titleId}-type`} className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">Typography</h3>
-                  <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Adjust how your document reads while you work.</p>
-                </div>
+              <section aria-label="Typography settings" className="space-y-5">
                 <Range label="Editor font size" min={EDITOR_FONT_SIZE.min} max={EDITOR_FONT_SIZE.max} snapPoints={EDITOR_FONT_SIZE.snapPoints} value={settings.editorFontSize} onChange={(editorFontSize) => onChange({ editorFontSize })} />
                 <Range label="Preview font size" min={PREVIEW_FONT_SIZE.min} max={PREVIEW_FONT_SIZE.max} snapPoints={PREVIEW_FONT_SIZE.snapPoints} value={settings.previewFontSize} onChange={(previewFontSize) => onChange({ previewFontSize })} />
                 <LineHeightSelect value={settings.lineHeight} onChange={(lineHeight) => onChange({ lineHeight })} />

@@ -10,6 +10,16 @@ const renderEditor = async () => {
 };
 
 describe("Settings dialog", () => {
+  it("omits the introductory settings copy", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.queryByText("Tune your writing space.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Typography")).not.toBeInTheDocument();
+    expect(screen.queryByText("Adjust how your document reads while you work.")).not.toBeInTheDocument();
+  });
+
   it("opens an accessible dialog and closes with Escape", async () => {
     const user = userEvent.setup();
     await renderEditor();
