@@ -40,6 +40,8 @@ export function EditorLayout() {
   const previewCollapseProgress = getCollapseProgress(ratio, "preview");
   const reopenEditor = useCallback(() => commitRatio(25), [commitRatio]);
   const reopenPreview = useCallback(() => commitRatio(75), [commitRatio]);
+  const expandEditor = useCallback(() => commitRatio(100), [commitRatio]);
+  const expandPreview = useCallback(() => commitRatio(0), [commitRatio]);
   const handleOpen = (content: string) => {
     setMarkdown(content);
     if (editRadioRef.current) editRadioRef.current.checked = true;
@@ -58,9 +60,9 @@ export function EditorLayout() {
           "--preview-collapse-progress": previewCollapseProgress,
         } as CSSProperties}
       >
-        <EditorPane value={markdown} onChange={setMarkdown} settings={settings} collapsed={isDesktop && ratio === 0} onReopen={reopenEditor} />
+        <EditorPane value={markdown} onChange={setMarkdown} settings={settings} collapsed={isDesktop && ratio === 0} onReopen={reopenEditor} onExpand={isDesktop ? expandEditor : undefined} />
         <PaneResizer ratio={ratio} onChange={setRatio} onCommit={commitRatio} />
-        <PreviewPane markdown={markdown} fontSize={settings.previewFontSize} collapsed={isDesktop && ratio === 100} onReopen={reopenPreview} />
+        <PreviewPane markdown={markdown} fontSize={settings.previewFontSize} collapsed={isDesktop && ratio === 100} onReopen={reopenPreview} onExpand={isDesktop ? expandPreview : undefined} />
       </main>
     </div>
   );

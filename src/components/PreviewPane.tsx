@@ -6,7 +6,7 @@ import { markdownSanitizeSchema } from "@/lib/markdown";
 import { isExternalHref, openInSystemBrowser } from "@/lib/native-shell";
 import { MermaidBlock } from "./MermaidBlock";
 
-interface PreviewPaneProps { markdown: string; fontSize?: number; collapsed?: boolean; onReopen?: () => void }
+interface PreviewPaneProps { markdown: string; fontSize?: number; collapsed?: boolean; onReopen?: () => void; onExpand?: () => void }
 
 const markdownComponents: Components = {
   code({ className, children, ...props }) {
@@ -26,11 +26,15 @@ const markdownComponents: Components = {
   },
 };
 
-export const PreviewPane = memo(function PreviewPane({ markdown, fontSize = 16, collapsed = false, onReopen }: PreviewPaneProps) {
+export const PreviewPane = memo(function PreviewPane({ markdown, fontSize = 16, collapsed = false, onReopen, onExpand }: PreviewPaneProps) {
   return (
     <section id="preview-panel" aria-label="Rendered preview" className={`preview-pane flex min-h-0 flex-1 flex-col bg-white dark:bg-neutral-950${collapsed ? " pane-collapsed" : ""}`}>
       <div className={`pane-content-shell${collapsed ? " pane-content-shell-collapsed" : ""}`} aria-hidden={collapsed}>
-        <div className="pane-heading"><span className="pane-heading-title">Preview</span></div>
+        {onExpand ? (
+          <button type="button" className="pane-heading pane-heading-button" aria-label="Expand Preview pane" onClick={onExpand}>
+            <span className="pane-heading-title">Preview</span>
+          </button>
+        ) : <div className="pane-heading"><span className="pane-heading-title">Preview</span></div>}
         <div className="preview-scroll min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-10 md:py-8">
           <article data-pane-content="preview" aria-label="Preview content" style={{ fontSize: `${fontSize}px` }} className="prose prose-neutral mx-auto max-w-3xl dark:prose-invert prose-headings:scroll-mt-4 prose-a:text-orange-600 prose-a:underline-offset-4 dark:prose-a:text-orange-400 prose-pre:border prose-pre:border-neutral-200 prose-pre:bg-neutral-950 prose-pre:text-neutral-100 dark:prose-pre:border-neutral-800">
             <ReactMarkdown

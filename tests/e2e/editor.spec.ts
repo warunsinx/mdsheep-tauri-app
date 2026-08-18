@@ -11,6 +11,19 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
+test("desktop pane title bars expand their pane to full width", async ({ page }, testInfo) => {
+  test.skip(isMobileProject(testInfo.project.name), "desktop behavior");
+  const separator = page.getByRole("separator", { name: "Resize editor and preview panes" });
+
+  await page.getByRole("button", { name: "Expand Markdown pane" }).click();
+  await expect(separator).toHaveAttribute("aria-valuenow", "100");
+  await page.getByRole("button", { name: "Reopen Preview pane" }).click();
+  await expect(separator).toHaveAttribute("aria-valuenow", "75");
+
+  await page.getByRole("button", { name: "Expand Preview pane" }).click();
+  await expect(separator).toHaveAttribute("aria-valuenow", "0");
+});
+
 test("desktop snaps the divider, collapses to endpoint rails, reopens, and persists", async ({ page }, testInfo) => {
   test.skip(isMobileProject(testInfo.project.name), "desktop behavior");
   const separator = page.getByRole("separator", { name: "Resize editor and preview panes" });
@@ -26,6 +39,9 @@ test("desktop snaps the divider, collapses to endpoint rails, reopens, and persi
   await page.mouse.move(layoutBox!.x + layoutBox!.width * 0.26, dividerBox!.y + 80, { steps: 8 });
   await page.mouse.up();
   await expect(separator).toHaveAttribute("aria-valuenow", "25");
+  await page.locator("main.pane-layout").evaluate((layout) =>
+    Promise.all(layout.getAnimations().map((animation) => animation.finished)),
+  );
 
   const quarterDivider = (await separator.boundingBox())!;
   await page.mouse.move(quarterDivider.x + quarterDivider.width / 2, quarterDivider.y + 80);
