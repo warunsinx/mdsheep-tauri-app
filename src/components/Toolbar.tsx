@@ -12,9 +12,11 @@ interface ToolbarProps {
   settings: EditorSettings;
   onSettingsChange: (patch: Partial<EditorSettings>) => void;
   onSettingsReset: () => void;
+  onSettingsSave: () => void;
+  onSettingsCancel: () => void;
 }
 
-export function Toolbar({ markdown, editRadioId, previewRadioId, onOpen, settings, onSettingsChange, onSettingsReset }: ToolbarProps) {
+export function Toolbar({ markdown, editRadioId, previewRadioId, onOpen, settings, onSettingsChange, onSettingsReset, onSettingsSave, onSettingsCancel }: ToolbarProps) {
   return (
     <header className="editor-toolbar z-10 shrink-0 border-b border-neutral-200 bg-white/95 dark:border-neutral-800 dark:bg-neutral-950/95">
       <div className="flex h-14 items-center gap-3 px-4 sm:px-5">
@@ -30,7 +32,7 @@ export function Toolbar({ markdown, editRadioId, previewRadioId, onOpen, setting
         </div>
         <div className="ml-auto flex items-center gap-1.5">
           <ThemeToggle />
-          <SettingsDialog settings={settings} onChange={onSettingsChange} onReset={onSettingsReset} />
+          <SettingsDialog settings={settings} onChange={onSettingsChange} onReset={onSettingsReset} onSave={onSettingsSave} onCancel={onSettingsCancel} />
           <OpenButton onOpen={onOpen} />
           <ExportButton markdown={markdown} />
         </div>

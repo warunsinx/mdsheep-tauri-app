@@ -1,25 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { DEFAULT_SETTINGS, loadSettings, resetSettings, saveSettings, type EditorSettings } from "@/lib/settings";
+import { DEFAULT_SETTINGS, loadSettings, saveSettings, type EditorSettings } from "@/lib/settings";
 
 export function useSettings() {
   const [settings, setSettings] = useState<EditorSettings>({ ...DEFAULT_SETTINGS });
-  const hydrated = useRef(false);
+  const savedSettings = useRef<EditorSettings>({ ...DEFAULT_SETTINGS });
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setSettings(loadSettings());
-      hydrated.current = true;
+      const loaded = loadSettings();
+      savedSettings.current = loaded;
+      setSettings(loaded);
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (hydrated.current) saveSettings(settings);
-  }, [settings]);
-
   return {
     settings,
     updateSettings: (patch: Partial<EditorSettings>) => setSettings((current) => ({ ...current, ...patch })),
-    reset: () => setSettings(resetSettings()),
+    reset: () => setSettings({ ...DEFAULT_SETTINGS }),
+    save: () => {
+      savedSettings.current = { ...settings };
+      saveSettings(settings);
+    },
+    restore: () => setSettings({ ...savedSettings.current }),
   };
 }

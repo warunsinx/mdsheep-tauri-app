@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Settings, X } from "lucide-react";
 import type { EditorSettings, LineHeight } from "@/lib/settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,20 +9,32 @@ interface SettingsDialogProps {
   settings: EditorSettings;
   onChange: (patch: Partial<EditorSettings>) => void;
   onReset: () => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 const focusableSelector = "button, input, select, [tabindex]:not([tabindex='-1'])";
 
-export function SettingsDialog({ settings, onChange, onReset }: SettingsDialogProps) {
+export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const close = () => {
+  const finishClose = useCallback(() => {
     setOpen(false);
     window.setTimeout(() => triggerRef.current?.focus(), 0);
-  };
+  }, []);
+
+  const cancel = useCallback(() => {
+    onCancel();
+    finishClose();
+  }, [finishClose, onCancel]);
+
+  const save = useCallback(() => {
+    onSave();
+    finishClose();
+  }, [finishClose, onSave]);
 
   useEffect(() => {
     if (!open) return;
@@ -30,7 +42,7 @@ export function SettingsDialog({ settings, onChange, onReset }: SettingsDialogPr
     document.body.style.overflow = "hidden";
     dialogRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close();
+      if (event.key === "Escape") cancel();
       if (event.key !== "Tab" || !dialogRef.current) return;
       const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector)];
       const first = focusable[0];
@@ -43,7 +55,7 @@ export function SettingsDialog({ settings, onChange, onReset }: SettingsDialogPr
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [cancel, open]);
 
   return (
     <>
@@ -51,11 +63,11 @@ export function SettingsDialog({ settings, onChange, onReset }: SettingsDialogPr
         <Settings className="size-4" aria-hidden="true" />
       </button>
       {open && (
-        <div className="settings-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
+        <div className="settings-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) cancel(); }}>
           <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="settings-dialog">
             <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
               <div><h2 id={titleId} className="text-lg font-semibold">Settings</h2><p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">Tune your writing space.</p></div>
-              <button type="button" className="icon-button" aria-label="Close settings" onClick={close}><X className="size-4" aria-hidden="true" /></button>
+              <button type="button" className="icon-button" aria-label="Close settings" onClick={cancel}><X className="size-4" aria-hidden="true" /></button>
             </div>
             <div className="space-y-6 overflow-y-auto px-5 py-5">
               <section aria-labelledby={`${titleId}-type`} className="space-y-5">
@@ -82,7 +94,7 @@ export function SettingsDialog({ settings, onChange, onReset }: SettingsDialogPr
             </div>
             <div className="flex justify-between border-t border-neutral-200 px-5 py-4 dark:border-neutral-800">
               <button type="button" className="settings-button" onClick={onReset}>Reset defaults</button>
-              <button type="button" className="settings-button settings-button-primary" onClick={close}>Close</button>
+              <button type="button" className="settings-button settings-button-primary" onClick={save}>Save</button>
             </div>
           </div>
         </div>

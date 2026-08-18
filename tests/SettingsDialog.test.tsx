@@ -22,6 +22,21 @@ describe("Settings dialog", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("restores the last saved settings when dismissed without saving", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    const editorSize = screen.getByRole("slider", { name: "Editor font size" });
+    fireEvent.keyDown(editorSize, { key: "ArrowRight" });
+    expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "17px" });
+
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "16px" });
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByRole("slider", { name: "Editor font size" })).toHaveValue(16);
+  });
+
   it("renders accessible Radix controls with shadcn data slots", async () => {
     const user = userEvent.setup();
     await renderEditor();
@@ -58,6 +73,29 @@ describe("Settings dialog", () => {
     expect(editor).toHaveAttribute("spellcheck", "false");
     expect(screen.getByLabelText("Preview content")).toHaveStyle({ fontSize: "17px" });
     expect(screen.queryByText(/words ·/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(JSON.parse(window.localStorage.getItem("md-editor:settings:v1") ?? "null")?.settings).toMatchObject({
+      editorFontSize: 18,
+      previewFontSize: 17,
+      lineHeight: "relaxed",
+      wordWrap: false,
+      spellcheck: false,
+      showStats: false,
+    });
+  });
+
+  it("restores the most recently saved values after later edits are cancelled", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Editor font size" }), { key: "ArrowRight" });
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Editor font size" }), { key: "ArrowRight" });
+    await user.click(screen.getByRole("button", { name: "Close settings" }));
+
+    expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "17px" });
   });
 
   it("resets controls and live output to defaults", async () => {

@@ -25,7 +25,7 @@ export function EditorLayout() {
   const editRadioRef = useRef<HTMLInputElement>(null);
   const { ratio, setRatio, commitRatio } = usePaneSplit();
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const { settings, updateSettings, reset } = useSettings();
+  const { settings, updateSettings, reset, save, restore } = useSettings();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -49,7 +49,7 @@ export function EditorLayout() {
     <div className="flex h-dvh min-h-[420px] flex-col overflow-hidden bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50">
       <input ref={editRadioRef} id={editRadioId} className="pane-mode-edit sr-only" type="radio" name={paneModeName} aria-label="Edit" defaultChecked />
       <input id={previewRadioId} className="pane-mode-preview sr-only" type="radio" name={paneModeName} aria-label="Preview" />
-      <Toolbar markdown={markdown} editRadioId={editRadioId} previewRadioId={previewRadioId} onOpen={handleOpen} settings={settings} onSettingsChange={updateSettings} onSettingsReset={reset} />
+      <Toolbar markdown={markdown} editRadioId={editRadioId} previewRadioId={previewRadioId} onOpen={handleOpen} settings={settings} onSettingsChange={updateSettings} onSettingsReset={reset} onSettingsSave={save} onSettingsCancel={restore} />
       <main
         className={`pane-layout min-h-0 flex-1${isDesktop && ratio === 0 ? " pane-layout-editor-collapsed" : ""}${isDesktop && ratio === 100 ? " pane-layout-preview-collapsed" : ""}`}
         style={{

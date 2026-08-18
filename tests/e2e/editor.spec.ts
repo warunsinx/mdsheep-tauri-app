@@ -316,7 +316,7 @@ test("settings apply live and persist after reload", async ({ page }) => {
   await dialog.getByRole("switch", { name: "Word wrap" }).click();
   await dialog.getByRole("switch", { name: "Spellcheck" }).click();
   await dialog.getByRole("switch", { name: "Show word and line stats" }).click();
-  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
 
   const editor = page.getByLabel("Markdown editor");
   await expect(editor).toHaveCSS("font-size", "20px");
