@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Settings, X } from "lucide-react";
-import type { EditorSettings, LineHeight } from "@/lib/settings";
+import { EDITOR_FONT_SIZE, PREVIEW_FONT_SIZE, type EditorSettings, type LineHeight } from "@/lib/settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -75,8 +75,8 @@ export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }
                   <h3 id={`${titleId}-type`} className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">Typography</h3>
                   <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Adjust how your document reads while you work.</p>
                 </div>
-                <Range label="Editor font size" min={16} max={24} value={settings.editorFontSize} onChange={(editorFontSize) => onChange({ editorFontSize })} />
-                <Range label="Preview font size" min={14} max={22} value={settings.previewFontSize} onChange={(previewFontSize) => onChange({ previewFontSize })} />
+                <Range label="Editor font size" min={EDITOR_FONT_SIZE.min} max={EDITOR_FONT_SIZE.max} snapPoints={EDITOR_FONT_SIZE.snapPoints} value={settings.editorFontSize} onChange={(editorFontSize) => onChange({ editorFontSize })} />
+                <Range label="Preview font size" min={PREVIEW_FONT_SIZE.min} max={PREVIEW_FONT_SIZE.max} snapPoints={PREVIEW_FONT_SIZE.snapPoints} value={settings.previewFontSize} onChange={(previewFontSize) => onChange({ previewFontSize })} />
                 <LineHeightSelect value={settings.lineHeight} onChange={(lineHeight) => onChange({ lineHeight })} />
               </section>
 
@@ -103,7 +103,7 @@ export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }
   );
 }
 
-function Range({ label, min, max, value, onChange }: { label: string; min: number; max: number; value: number; onChange: (value: number) => void }) {
+function Range({ label, min, max, snapPoints, value, onChange }: { label: string; min: number; max: number; snapPoints: readonly number[]; value: number; onChange: (value: number) => void }) {
   return (
     <div className="text-sm font-medium">
       <div className="flex items-center justify-between">
@@ -111,7 +111,22 @@ function Range({ label, min, max, value, onChange }: { label: string; min: numbe
         <output className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs tabular-nums text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">{value} px</output>
       </div>
       <Slider aria-label={label} min={min} max={max} step={1} value={[value]} onValueChange={([nextValue]) => onChange(nextValue)} className="mt-2" />
-      <div aria-hidden="true" className="mt-0.5 flex justify-between text-[10px] tabular-nums text-neutral-400 dark:text-neutral-500"><span>{min}</span><span>{max}</span></div>
+      <div className="relative mt-0.5 h-6" aria-label={`${label} snap points`}>
+        {snapPoints.map((point) => (
+          <button
+            key={point}
+            type="button"
+            aria-label={`Set ${label} to ${point} pixels`}
+            aria-pressed={value === point}
+            className="group absolute top-0 flex -translate-x-1/2 flex-col items-center gap-0.5 text-[9px] tabular-nums text-neutral-400 outline-none transition-colors hover:text-neutral-700 focus-visible:text-orange-600 dark:text-neutral-500 dark:hover:text-neutral-200 dark:focus-visible:text-orange-400"
+            style={{ left: `${((point - min) / (max - min)) * 100}%` }}
+            onClick={() => onChange(point)}
+          >
+            <span className="size-1.5 rounded-full bg-neutral-300 transition-[transform,background-color] group-hover:scale-125 group-aria-pressed:bg-orange-600 group-focus-visible:ring-2 group-focus-visible:ring-orange-500 group-focus-visible:ring-offset-2 dark:bg-neutral-600 dark:group-aria-pressed:bg-orange-400" aria-hidden="true" />
+            <span>{point}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

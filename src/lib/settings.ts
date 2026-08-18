@@ -1,5 +1,17 @@
 export const SETTINGS_STORAGE_KEY = "md-editor:settings:v1";
 
+export const EDITOR_FONT_SIZE = {
+  min: 16,
+  max: 36,
+  snapPoints: [16, 20, 24, 28, 32, 36],
+} as const;
+
+export const PREVIEW_FONT_SIZE = {
+  min: 12,
+  max: 36,
+  snapPoints: [12, 16, 20, 24, 28, 32, 36],
+} as const;
+
 export type LineHeight = "compact" | "comfortable" | "relaxed";
 
 export interface EditorSettings {
@@ -32,8 +44,8 @@ const isIntegerInRange = (value: unknown, min: number, max: number) =>
 export function validateSettings(value: unknown): EditorSettings {
   if (
     typeof value === "object" && value !== null &&
-    "editorFontSize" in value && isIntegerInRange(value.editorFontSize, 16, 24) &&
-    "previewFontSize" in value && isIntegerInRange(value.previewFontSize, 14, 22) &&
+    "editorFontSize" in value && isIntegerInRange(value.editorFontSize, EDITOR_FONT_SIZE.min, EDITOR_FONT_SIZE.max) &&
+    "previewFontSize" in value && isIntegerInRange(value.previewFontSize, PREVIEW_FONT_SIZE.min, PREVIEW_FONT_SIZE.max) &&
     "lineHeight" in value && ["compact", "comfortable", "relaxed"].includes(String(value.lineHeight)) &&
     "wordWrap" in value && typeof value.wordWrap === "boolean" &&
     "spellcheck" in value && typeof value.spellcheck === "boolean" &&

@@ -21,10 +21,20 @@ describe("settings persistence", () => {
     expect(validateSettings(settings)).toEqual(settings);
   });
 
+  it("accepts the expanded editor and preview font-size boundaries", () => {
+    expect(validateSettings({ ...DEFAULT_SETTINGS, editorFontSize: 36, previewFontSize: 12 })).toEqual({
+      ...DEFAULT_SETTINGS,
+      editorFontSize: 36,
+      previewFontSize: 12,
+    });
+  });
+
   it.each([
     { editorFontSize: 15 },
+    { editorFontSize: 37 },
     { editorFontSize: 20.5 },
-    { previewFontSize: 23 },
+    { previewFontSize: 11 },
+    { previewFontSize: 37 },
     { lineHeight: "roomy" },
     { wordWrap: "yes" },
     { spellcheck: 1 },

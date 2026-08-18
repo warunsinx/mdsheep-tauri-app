@@ -310,7 +310,7 @@ test("settings apply live and persist after reload", async ({ page }) => {
   const previewSize = dialog.getByRole("slider", { name: "Preview font size" });
   await previewSize.focus();
   await previewSize.press("Home");
-  for (let step = 0; step < 4; step += 1) await previewSize.press("ArrowRight");
+  for (let step = 0; step < 6; step += 1) await previewSize.press("ArrowRight");
   await dialog.getByRole("combobox", { name: "Line spacing" }).click();
   await page.getByRole("option", { name: "Compact" }).click();
   await dialog.getByRole("switch", { name: "Word wrap" }).click();

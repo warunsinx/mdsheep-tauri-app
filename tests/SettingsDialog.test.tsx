@@ -48,6 +48,19 @@ describe("Settings dialog", () => {
     expect(screen.getByRole("switch", { name: "Word wrap" })).toHaveAttribute("data-slot", "switch");
   });
 
+  it("offers clickable font-size snap points across the expanded ranges", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.getByRole("slider", { name: "Editor font size" })).toHaveAttribute("aria-valuemax", "36");
+    expect(screen.getByRole("slider", { name: "Preview font size" })).toHaveAttribute("aria-valuemin", "12");
+    await user.click(screen.getByRole("button", { name: "Set Editor font size to 24 pixels" }));
+
+    expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "24px" });
+    expect(screen.getByText("24 px")).toBeInTheDocument();
+  });
+
   it("provides controls and applies every setting live", async () => {
     const user = userEvent.setup();
     await renderEditor();
