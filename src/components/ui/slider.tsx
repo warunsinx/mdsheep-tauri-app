@@ -2,6 +2,8 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 import type { ComponentProps } from "react";
 import { clsx } from "clsx";
 
+export const SLIDER_THUMB_SIZE_PX = 20;
+
 export function Slider({ className, "aria-label": ariaLabel, ...props }: ComponentProps<typeof SliderPrimitive.Root>) {
   return (
     <SliderPrimitive.Root
@@ -24,7 +26,8 @@ export function Slider({ className, "aria-label": ariaLabel, ...props }: Compone
       <SliderPrimitive.Thumb
         data-slot="slider-thumb"
         aria-label={ariaLabel}
-        className="block size-5 rounded-full border-2 border-orange-600 bg-white shadow-md ring-offset-white transition-[transform,box-shadow] outline-none hover:scale-110 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:pointer-events-none dark:border-orange-400 dark:bg-neutral-950 dark:ring-offset-neutral-950 dark:focus-visible:ring-orange-400"
+        style={{ width: SLIDER_THUMB_SIZE_PX, height: SLIDER_THUMB_SIZE_PX }}
+        className="block rounded-full border-2 border-orange-600 bg-white shadow-md ring-offset-white transition-[transform,box-shadow] outline-none hover:scale-110 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:pointer-events-none dark:border-orange-400 dark:bg-neutral-950 dark:ring-offset-neutral-950 dark:focus-visible:ring-orange-400"
       />
     </SliderPrimitive.Root>
   );

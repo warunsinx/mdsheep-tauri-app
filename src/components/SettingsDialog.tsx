@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Settings, X } from "lucide-react";
 import { EDITOR_FONT_SIZE, PREVIEW_FONT_SIZE, type EditorSettings, type LineHeight } from "@/lib/settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+import { Slider, SLIDER_THUMB_SIZE_PX } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 
 interface SettingsDialogProps {
@@ -111,20 +111,22 @@ function Range({ label, min, max, snapPoints, value, onChange }: { label: string
       </div>
       <Slider aria-label={label} min={min} max={max} step={1} value={[value]} onValueChange={([nextValue]) => onChange(nextValue)} className="mt-2" />
       <div className="relative mt-0.5 h-6" aria-label={`${label} snap points`}>
-        {snapPoints.map((point) => (
-          <button
-            key={point}
-            type="button"
-            aria-label={`Set ${label} to ${point} pixels`}
-            aria-pressed={value === point}
-            className="group absolute top-0 flex -translate-x-1/2 flex-col items-center gap-0.5 text-[9px] tabular-nums text-neutral-400 outline-none transition-colors hover:text-neutral-700 focus-visible:text-orange-600 dark:text-neutral-500 dark:hover:text-neutral-200 dark:focus-visible:text-orange-400"
-            style={{ left: `${((point - min) / (max - min)) * 100}%` }}
-            onClick={() => onChange(point)}
-          >
-            <span className="size-1.5 rounded-full bg-neutral-300 transition-[transform,background-color] group-hover:scale-125 group-aria-pressed:bg-orange-600 group-focus-visible:ring-2 group-focus-visible:ring-orange-500 group-focus-visible:ring-offset-2 dark:bg-neutral-600 dark:group-aria-pressed:bg-orange-400" aria-hidden="true" />
-            <span>{point}</span>
-          </button>
-        ))}
+        <div className="absolute top-0 h-full" style={{ insetInline: SLIDER_THUMB_SIZE_PX / 2 }}>
+          {snapPoints.map((point) => (
+            <button
+              key={point}
+              type="button"
+              aria-label={`Set ${label} to ${point} pixels`}
+              aria-pressed={value === point}
+              className="group absolute top-0 flex -translate-x-1/2 flex-col items-center gap-0.5 text-[9px] tabular-nums text-neutral-400 outline-none transition-colors hover:text-neutral-700 focus-visible:text-orange-600 dark:text-neutral-500 dark:hover:text-neutral-200 dark:focus-visible:text-orange-400"
+              style={{ left: `${((point - min) / (max - min)) * 100}%` }}
+              onClick={() => onChange(point)}
+            >
+              <span className="size-1.5 rounded-full bg-neutral-300 transition-[transform,background-color] group-hover:scale-125 group-aria-pressed:bg-orange-600 group-focus-visible:ring-2 group-focus-visible:ring-orange-500 group-focus-visible:ring-offset-2 dark:bg-neutral-600 dark:group-aria-pressed:bg-orange-400" aria-hidden="true" />
+              <span>{point}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

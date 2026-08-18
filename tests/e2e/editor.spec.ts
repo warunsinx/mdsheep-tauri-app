@@ -315,6 +315,27 @@ test("opens a selected local Markdown file on desktop and mobile", async ({ page
   await expect(page.getByRole("heading", { name: "Opened file" })).toBeVisible();
 });
 
+test("font slider thumbs align exactly with their snap points", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+
+  for (const { label, points } of [
+    { label: "Editor font size", points: [16, 20, 24, 28, 32, 36] },
+    { label: "Preview font size", points: [12, 16, 20, 24, 28, 32, 36] },
+  ]) {
+    const thumb = page.getByRole("slider", { name: label });
+    for (const point of points) {
+      const snapPoint = page.getByRole("button", { name: `Set ${label} to ${point} pixels` });
+      await snapPoint.click();
+      const [thumbBox, snapPointBox] = await Promise.all([thumb.boundingBox(), snapPoint.boundingBox()]);
+      expect(thumbBox).not.toBeNull();
+      expect(snapPointBox).not.toBeNull();
+      const thumbCenter = thumbBox!.x + thumbBox!.width / 2;
+      const snapPointCenter = snapPointBox!.x + snapPointBox!.width / 2;
+      expect(Math.abs(thumbCenter - snapPointCenter)).toBeLessThanOrEqual(0.75);
+    }
+  }
+});
+
 test("settings apply live and persist after reload", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
   const dialog = page.getByRole("dialog", { name: "Settings" });
