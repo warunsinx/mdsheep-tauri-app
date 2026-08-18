@@ -303,12 +303,19 @@ test("settings apply live and persist after reload", async ({ page }) => {
   await page.getByRole("button", { name: "Settings" }).click();
   const dialog = page.getByRole("dialog", { name: "Settings" });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("slider", { name: "Editor font size" }).fill("20");
-  await dialog.getByRole("slider", { name: "Preview font size" }).fill("18");
-  await dialog.getByRole("combobox", { name: "Line spacing" }).selectOption("compact");
-  await dialog.getByRole("checkbox", { name: "Word wrap" }).uncheck();
-  await dialog.getByRole("checkbox", { name: "Spellcheck" }).uncheck();
-  await dialog.getByRole("checkbox", { name: "Show word and line stats" }).uncheck();
+  const editorSize = dialog.getByRole("slider", { name: "Editor font size" });
+  await editorSize.focus();
+  await editorSize.press("Home");
+  for (let step = 0; step < 4; step += 1) await editorSize.press("ArrowRight");
+  const previewSize = dialog.getByRole("slider", { name: "Preview font size" });
+  await previewSize.focus();
+  await previewSize.press("Home");
+  for (let step = 0; step < 4; step += 1) await previewSize.press("ArrowRight");
+  await dialog.getByRole("combobox", { name: "Line spacing" }).click();
+  await page.getByRole("option", { name: "Compact" }).click();
+  await dialog.getByRole("switch", { name: "Word wrap" }).click();
+  await dialog.getByRole("switch", { name: "Spellcheck" }).click();
+  await dialog.getByRole("switch", { name: "Show word and line stats" }).click();
   await dialog.getByRole("button", { name: "Close", exact: true }).click();
 
   const editor = page.getByLabel("Markdown editor");

@@ -21,3 +21,25 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: vi.fn(),
   })),
 });
+
+class ResizeObserverMock implements ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+Object.defineProperty(globalThis, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
+Object.defineProperties(HTMLElement.prototype, {
+  hasPointerCapture: { value: vi.fn(() => false) },
+  setPointerCapture: { value: vi.fn() },
+  releasePointerCapture: { value: vi.fn() },
+  scrollIntoView: { value: vi.fn() },
+});

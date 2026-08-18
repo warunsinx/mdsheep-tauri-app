@@ -22,6 +22,17 @@ describe("Settings dialog", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("renders accessible Radix controls with shadcn data slots", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(screen.getByRole("slider", { name: "Editor font size" })).toHaveAttribute("data-slot", "slider-thumb");
+    expect(screen.getByRole("slider", { name: "Editor font size" }).closest('[data-slot="slider"]')).not.toBeNull();
+    expect(screen.getByRole("combobox", { name: "Line spacing" })).toHaveAttribute("data-slot", "select-trigger");
+    expect(screen.getByRole("switch", { name: "Word wrap" })).toHaveAttribute("data-slot", "switch");
+  });
+
   it("provides controls and applies every setting live", async () => {
     const user = userEvent.setup();
     await renderEditor();
@@ -29,12 +40,15 @@ describe("Settings dialog", () => {
 
     const editorSize = screen.getByRole("slider", { name: "Editor font size" });
     const previewSize = screen.getByRole("slider", { name: "Preview font size" });
-    fireEvent.change(editorSize, { target: { value: "18" } });
-    fireEvent.change(previewSize, { target: { value: "17" } });
-    await user.selectOptions(screen.getByRole("combobox", { name: "Line spacing" }), "relaxed");
-    await user.click(screen.getByRole("checkbox", { name: "Word wrap" }));
-    await user.click(screen.getByRole("checkbox", { name: "Spellcheck" }));
-    await user.click(screen.getByRole("checkbox", { name: "Show word and line stats" }));
+    fireEvent.keyDown(editorSize, { key: "ArrowRight" });
+    fireEvent.keyDown(editorSize, { key: "ArrowRight" });
+    fireEvent.keyDown(previewSize, { key: "ArrowRight" });
+    const lineSpacing = screen.getByRole("combobox", { name: "Line spacing" });
+    fireEvent.keyDown(lineSpacing, { key: "Enter" });
+    fireEvent.click(screen.getByRole("option", { name: "Relaxed" }));
+    await user.click(screen.getByRole("switch", { name: "Word wrap" }));
+    await user.click(screen.getByRole("switch", { name: "Spellcheck" }));
+    await user.click(screen.getByRole("switch", { name: "Show word and line stats" }));
 
     expect(screen.getByText("18 px")).toBeInTheDocument();
     expect(screen.getByText("17 px")).toBeInTheDocument();
@@ -51,10 +65,10 @@ describe("Settings dialog", () => {
     await renderEditor();
     await user.click(screen.getByRole("button", { name: "Settings" }));
     const editorSize = screen.getByRole("slider", { name: "Editor font size" });
-    fireEvent.change(editorSize, { target: { value: "17" } });
+    fireEvent.keyDown(editorSize, { key: "ArrowRight" });
     await user.click(screen.getByRole("button", { name: "Reset defaults" }));
-    expect(editorSize).toHaveValue("16");
-    expect(screen.getByRole("checkbox", { name: "Word wrap" })).toBeChecked();
+    expect(editorSize).toHaveValue(16);
+    expect(screen.getByRole("switch", { name: "Word wrap" })).toBeChecked();
     expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "16px" });
   });
 });
