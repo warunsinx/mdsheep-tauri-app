@@ -6,6 +6,10 @@ MdSheep is a small, local-first Markdown reader and editor with live Mermaid sup
 
 ![MdSheep running on desktop and mobile](assets/github/mdsheep-dark-responsive-features.png)
 
+## Web version
+
+Try MdSheep in your browser at **[mdsheep-tauri-app.vercel.app](https://mdsheep-tauri-app.vercel.app/)**.
+
 ## Project status
 
 This repository is the successor to [`mdsheep-app`](https://github.com/warunsinx/mdsheep-app). Native desktop support is working on Windows, while broader operating-system and device packaging is being prepared and tested.
