@@ -409,6 +409,44 @@ test("Settings Save keeps an accent hover instead of inheriting the neutral butt
   expect(colors.foreground).not.toBe(colors.background);
 });
 
+test("Settings switches remain visible in every preset and color mode", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  const failures = await page.evaluate(() => {
+    const presets = ["default", "gruvbox", "nord", "dracula", "solarized", "tokyo-night"];
+    const modes = ["light", "dark"];
+    const states = ["checked", "unchecked"];
+    const root = document.documentElement;
+    const switchElement = document.querySelector<HTMLElement>('[data-slot="switch"]')!;
+    const thumb = switchElement.querySelector<HTMLElement>('[data-slot="switch-thumb"]')!;
+    const style = document.createElement("style");
+    style.textContent = "[data-slot=switch],[data-slot=switch-thumb]{transition:none!important}";
+    document.head.append(style);
+    const luminance = (value: string) => {
+      const channels = value.match(/[\d.]+/g)!.slice(0, 3).map(Number).map((channel) => channel / 255);
+      return channels.map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+        .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+    };
+    const contrast = (first: string, second: string) => {
+      const [lighter, darker] = [luminance(first), luminance(second)].sort((a, b) => b - a);
+      return (lighter + 0.05) / (darker + 0.05);
+    };
+    const failures: string[] = [];
+    for (const preset of presets) for (const mode of modes) for (const state of states) {
+      root.dataset.themePreset = preset;
+      root.classList.toggle("dark", mode === "dark");
+      switchElement.dataset.state = state;
+      thumb.dataset.state = state;
+      const trackColor = getComputedStyle(switchElement).backgroundColor;
+      const thumbColor = getComputedStyle(thumb).backgroundColor;
+      const ratio = contrast(trackColor, thumbColor);
+      if (ratio < 3) failures.push(`${preset} ${mode} ${state}: ${ratio} (${trackColor} / ${thumbColor})`);
+    }
+    style.remove();
+    return failures;
+  });
+  expect(failures).toEqual([]);
+});
+
 test("computed CSS theme palettes keep semantic text AA-safe on every rendered surface", async ({ page }) => {
   const failures = await page.evaluate(() => {
     const presets = ["default", "gruvbox", "nord", "dracula", "solarized", "tokyo-night"];

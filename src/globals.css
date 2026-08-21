@@ -397,6 +397,11 @@ body,.app-shell { background:var(--app-bg);color:var(--text-primary) }.editor-to
 .theme-prose :where(ul, ol) > li::marker { color: var(--text-muted); }
 .theme-prose :where(hr) { color: var(--border); }
 
+[data-slot="switch"][data-state="checked"] { background:var(--accent-solid) }
+[data-slot="switch"][data-state="unchecked"] { background:var(--rail) }
+[data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] { background:var(--accent-contrast) }
+[data-slot="switch"][data-state="unchecked"] [data-slot="switch-thumb"] { background:var(--text-primary) }
+
 .export-menu-root { position:relative; }
 .export-menu { position:absolute; z-index:70; top:calc(100% + .45rem); right:0; width:min(19rem,calc(100vw - 1rem)); overflow:hidden; border:1px solid var(--border); border-radius:.65rem; background:var(--elevated-bg); color:var(--text-primary); box-shadow:0 16px 40px rgb(0 0 0/.22); padding:.3rem; }
 .export-menu [role="menuitem"] { display:flex; min-height:44px; width:100%; align-items:center; gap:.7rem; border:0; border-radius:.45rem; background:transparent; padding:.55rem .7rem; color:inherit; text-align:left; }
