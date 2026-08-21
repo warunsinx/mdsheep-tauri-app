@@ -4,18 +4,20 @@ import { EDITOR_FONT_SIZE, PREVIEW_FONT_SIZE, type EditorSettings, type LineHeig
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider, SLIDER_THUMB_SIZE_PX } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { THEME_PRESETS, type ThemePreset } from "@/lib/theme-presets";
 
 interface SettingsDialogProps {
   settings: EditorSettings;
   onChange: (patch: Partial<EditorSettings>) => void;
   onReset: () => void;
-  onSave: () => void;
+  onSave: () => boolean;
   onCancel: () => void;
+  preset: ThemePreset; onPresetChange: (preset: ThemePreset) => void;
 }
 
 const focusableSelector = "button, input, select, [tabindex]:not([tabindex='-1'])";
 
-export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }: SettingsDialogProps) {
+export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel, preset: activePreset, onPresetChange }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -32,8 +34,7 @@ export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }
   }, [finishClose, onCancel]);
 
   const save = useCallback(() => {
-    onSave();
-    finishClose();
+    if (onSave()) finishClose();
   }, [finishClose, onSave]);
 
   useEffect(() => {
@@ -70,6 +71,27 @@ export function SettingsDialog({ settings, onChange, onReset, onSave, onCancel }
               <button type="button" className="icon-button" aria-label="Close settings" onClick={cancel}><X className="size-4" aria-hidden="true" /></button>
             </div>
             <div className="space-y-6 overflow-y-auto px-5 py-5">
+              <section aria-labelledby={`${titleId}-color`} className="space-y-3">
+                <div>
+                  <h3 id={`${titleId}-color`} className="settings-muted text-xs font-semibold uppercase tracking-[0.12em]">Theme preset</h3>
+                  <p className="settings-muted mt-1 text-xs">Choose a complete palette for every app surface in light and dark.</p>
+                </div>
+                <div role="radiogroup" aria-label="Theme preset" className="theme-preset-chooser">
+                  {THEME_PRESETS.map((preset) => (
+                    <label key={preset.id} className="theme-preset-option">
+                      <input
+                        type="radio"
+                        name={`${titleId}-theme-preset`}
+                        value={preset.id}
+                        checked={activePreset === preset.id}
+                        onChange={() => onPresetChange(preset.id)}
+                      />
+                      <span className="theme-preset-swatch" style={{ "--swatch-bg": preset.palettes.light.app, "--swatch-surface": preset.palettes.light.chrome, "--swatch-accent": preset.palettes.light.accent } as React.CSSProperties} aria-hidden="true" />
+                      <span>{preset.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </section>
               <section aria-label="Typography settings" className="space-y-5">
                 <Range label="Editor font size" min={EDITOR_FONT_SIZE.min} max={EDITOR_FONT_SIZE.max} snapPoints={EDITOR_FONT_SIZE.snapPoints} value={settings.editorFontSize} onChange={(editorFontSize) => onChange({ editorFontSize })} />
                 <Range label="Preview font size" min={PREVIEW_FONT_SIZE.min} max={PREVIEW_FONT_SIZE.max} snapPoints={PREVIEW_FONT_SIZE.snapPoints} value={settings.previewFontSize} onChange={(previewFontSize) => onChange({ previewFontSize })} />
@@ -114,11 +136,11 @@ function Range({ label, min, max, snapPoints, value, onChange }: { label: string
               type="button"
               aria-label={`Set ${label} to ${point} pixels`}
               aria-pressed={value === point}
-              className="group absolute top-0 flex -translate-x-1/2 flex-col items-center gap-0.5 text-[9px] tabular-nums text-neutral-400 outline-none transition-colors hover:text-neutral-700 focus-visible:text-orange-600 dark:text-neutral-500 dark:hover:text-neutral-200 dark:focus-visible:text-orange-400"
+              className="snap-point group absolute top-0 flex -translate-x-1/2 flex-col items-center gap-0.5 text-[9px] tabular-nums text-neutral-400 outline-none transition-colors hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200"
               style={{ left: `${((point - min) / (max - min)) * 100}%` }}
               onClick={() => onChange(point)}
             >
-              <span className="size-1.5 rounded-full bg-neutral-300 transition-[transform,background-color] group-hover:scale-125 group-aria-pressed:bg-orange-600 group-focus-visible:ring-2 group-focus-visible:ring-orange-500 group-focus-visible:ring-offset-2 dark:bg-neutral-600 dark:group-aria-pressed:bg-orange-400" aria-hidden="true" />
+              <span className="snap-point-dot size-1.5 rounded-full bg-neutral-300 transition-[transform,background-color] group-hover:scale-125 group-focus-visible:ring-2 group-focus-visible:ring-offset-2 dark:bg-neutral-600" aria-hidden="true" />
               <span>{point}</span>
             </button>
           ))}

@@ -43,7 +43,7 @@ export const MermaidBlock = memo(function MermaidBlock({ code }: { code: string 
   }, [code, reactId]);
 
   if (state.status === "loading") {
-    return <div className="my-6 h-32 animate-pulse rounded-md border border-neutral-200 bg-neutral-50 motion-reduce:animate-none dark:border-neutral-800 dark:bg-neutral-900" aria-label="Rendering Mermaid diagram" />;
+    return <div className="mermaid-loading my-6 h-32 animate-pulse rounded-md border motion-reduce:animate-none" aria-label="Rendering Mermaid diagram" />;
   }
   if (state.status === "error") {
     return (
@@ -53,5 +53,5 @@ export const MermaidBlock = memo(function MermaidBlock({ code }: { code: string 
       </div>
     );
   }
-  return <div className="mermaid-output my-6 overflow-x-auto rounded-md border border-neutral-200 bg-white p-5 dark:border-neutral-800 dark:bg-neutral-900" aria-label="Mermaid diagram" dangerouslySetInnerHTML={{ __html: state.svg }} />;
+  return <div className="mermaid-output my-6 overflow-x-auto rounded-md border p-5" aria-label="Mermaid diagram" dangerouslySetInnerHTML={{ __html: state.svg }} />;
 });

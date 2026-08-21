@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { EditorLayout } from "@/components/EditorLayout";
 import { getCollapseProgress } from "@/components/EditorLayout";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -18,7 +18,8 @@ describe("EditorLayout mobile pane controls", () => {
 
     expect(screen.getByText("MdSheep")).toHaveClass("sr-only");
     expect(screen.getByText("Sheep")).toHaveClass("toolbar-brand-name", "hidden", "md:inline");
-    expect(screen.getByText("[MD]")).toHaveClass("bg-white", "text-orange-700", "dark:bg-black", "dark:text-orange-500");
+    expect(screen.getByText("[MD]")).toHaveClass("brand-badge");
+    expect(screen.getByText("[MD]")).not.toHaveClass("bg-white", "dark:bg-black");
   });
 
   it("associates visible Edit and Preview labels with same-name native radios", () => {
@@ -120,6 +121,28 @@ describe("EditorLayout mobile pane controls", () => {
     expect(css).toMatch(/\.pane-layout\.pane-is-dragging\s*\{[\s\S]*?transition:\s*none/);
   });
 
+  it("renders the formatting row between the brand row and the mobile view switch", () => {
+    renderEditor();
+
+    const rows = Array.from(document.querySelector(".editor-toolbar")!.children);
+    expect(rows).toHaveLength(3);
+    expect(rows[0].className).toContain("h-14");
+    expect(rows[1]).toHaveClass("format-bar");
+    expect(rows[1]).toContainElement(screen.getByRole("toolbar", { name: "Markdown formatting" }));
+    expect(rows[2].className).toContain("md:hidden");
+  });
+
+  it("scrolls the formatting row instead of the header and hides it in mobile preview mode", () => {
+    const css = readFileSync("src/globals.css", "utf8");
+
+    expect(css).toMatch(/\.format-bar\s*\{[\s\S]*?min-width:\s*0/);
+    expect(css).toMatch(/\.format-bar-scroll\s*\{[\s\S]*?min-width:\s*0[\s\S]*?overflow-x:\s*auto/);
+    expect(css).toContain(".pane-mode-preview:checked ~ .editor-toolbar .format-bar");
+    expect(css).toMatch(/\.view-mode-group\s*\{[\s\S]*?flex:\s*none/);
+    expect(css).toMatch(/\.view-mode-group\s+button\[aria-pressed="true"\]\s*\{[\s\S]*?color:\s*var\(--accent-soft-text\)/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*380px\)[\s\S]*?\.editor-toolbar\s*>\s*div:first-child/);
+  });
+
   it("exposes progressive collapse variables and frosted pane overlays", () => {
     renderEditor();
 
@@ -134,5 +157,64 @@ describe("EditorLayout mobile pane controls", () => {
     expect(css).toMatch(/\.editor-pane::after\s*\{[\s\S]*?opacity:\s*var\(--editor-collapse-progress\)/);
     expect(css).toMatch(/\.preview-pane::after\s*\{[\s\S]*?opacity:\s*var\(--preview-collapse-progress\)/);
     expect(css).toMatch(/\.pane-layout\.pane-is-dragging[\s\S]*?::after\s*\{[\s\S]*?background:\s*rgb\(255 255 255 \/ \.99[0-9]?\)[\s\S]*?backdrop-filter:\s*blur\([0-2]px\)[\s\S]*?transition:\s*none/);
+  });
+});
+
+describe("EditorLayout desktop view mode", () => {
+  const nativeMatchMedia = window.matchMedia;
+
+  beforeEach(() => {
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: (query: string) => ({
+        matches: query === "(min-width: 768px)",
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }),
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "matchMedia", { writable: true, value: nativeMatchMedia });
+  });
+
+  it("maps the view-mode buttons onto the persisted pane ratios", async () => {
+    renderEditor();
+    await act(() => new Promise((resolve) => window.setTimeout(resolve, 1)));
+    const separator = screen.getByRole("separator", { name: "Resize editor and preview panes" });
+    expect(document.querySelector(".format-bar")).toContainElement(screen.getByRole("group", { name: "View mode" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Editor only" }));
+    expect(separator).toHaveAttribute("aria-valuenow", "100");
+    expect(window.localStorage.getItem("md-editor:pane-ratio:v2")).toBe("100");
+
+    fireEvent.click(screen.getByRole("button", { name: "Preview only" }));
+    expect(separator).toHaveAttribute("aria-valuenow", "0");
+    expect(window.localStorage.getItem("md-editor:pane-ratio:v2")).toBe("0");
+    expect(screen.getByRole("button", { name: "Preview only" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "Split view" }));
+    expect(separator).toHaveAttribute("aria-valuenow", "50");
+    expect(window.localStorage.getItem("md-editor:pane-ratio:v2")).toBe("50");
+  });
+
+  it("disables formatting while the editor pane is collapsed", async () => {
+    renderEditor();
+    await act(() => new Promise((resolve) => window.setTimeout(resolve, 1)));
+    expect(screen.getByRole("button", { name: "Bold (Ctrl+B)" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Preview only" }));
+
+    expect(screen.getByRole("button", { name: "Bold (Ctrl+B)" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Mermaid flowchart" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Split view" }));
+
+    expect(screen.getByRole("button", { name: "Bold (Ctrl+B)" })).toBeEnabled();
   });
 });

@@ -367,6 +367,96 @@ test("settings apply live and persist after reload", async ({ page }) => {
   await expect(page.getByLabel("Preview content")).toHaveCSS("font-size", "18px");
 });
 
+test("theme preset persists and drives representative Nord light and dark surfaces", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByRole("radio", { name: "Nord" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  const lightColors = await page.evaluate(() => ({
+    preset: document.documentElement.dataset.themePreset,
+    app: getComputedStyle(document.documentElement).getPropertyValue("--app-bg").trim(),
+    accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+    caret: getComputedStyle(document.querySelector("#markdown-editor")!).caretColor,
+    badge: getComputedStyle(document.querySelector(".brand-badge")!).color,
+  }));
+  expect(lightColors).toEqual({ preset: "nord", app: "#eceff4", accent: "#5e81ac", caret: "rgb(94, 129, 172)", badge: "rgb(46, 52, 64)" });
+
+  await page.getByRole("button", { name: /Light theme/ }).click();
+  const darkColors = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+    selection: getComputedStyle(document.documentElement).getPropertyValue("--accent-selection").trim(),
+  }));
+  expect(darkColors).toEqual({ theme: "dark", accent: "#88c0d0", selection: "#4c566a" });
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme-preset", "nord");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+
+test("Settings Save keeps an accent hover instead of inheriting the neutral button hover", async ({ page }) => {
+  await page.getByRole("button", { name: "Settings" }).click();
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  await save.hover();
+  const colors = await save.evaluate((element) => {
+    const styles = getComputedStyle(element);
+    const probe = document.createElement("span");
+    probe.style.background = "var(--subtle-bg)";
+    document.body.append(probe);
+    const subtle = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return { background: styles.backgroundColor, foreground: styles.color, subtle };
+  });
+  expect(colors.background).not.toBe(colors.subtle);
+  expect(colors.foreground).not.toBe(colors.background);
+});
+
+test("computed CSS theme palettes keep semantic text AA-safe on every rendered surface", async ({ page }) => {
+  const failures = await page.evaluate(() => {
+    const presets = ["default", "gruvbox", "nord", "dracula", "solarized", "tokyo-night"];
+    const modes = ["light", "dark"];
+    const surfaces = ["--app-bg", "--chrome-bg", "--panel-bg", "--elevated-bg", "--subtle-bg"];
+    const root = document.documentElement;
+    const probe = document.createElement("span");
+    document.body.append(probe);
+    const rgb = (value: string) => {
+      probe.style.color = value;
+      const channels = getComputedStyle(probe).color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+      return channels.map((channel) => channel / 255);
+    };
+    const luminance = (value: string) => rgb(value)
+      .map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+      .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+    const contrast = (foreground: string, background: string) => {
+      const [lighter, darker] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+      return (lighter + 0.05) / (darker + 0.05);
+    };
+    const failures: string[] = [];
+    for (const preset of presets) for (const mode of modes) {
+      root.dataset.themePreset = preset;
+      root.classList.toggle("dark", mode === "dark");
+      const styles = getComputedStyle(root);
+      for (const surface of surfaces) for (const text of ["--text-primary", "--text-muted"]) {
+        const ratio = contrast(styles.getPropertyValue(text).trim(), styles.getPropertyValue(surface).trim());
+        if (ratio < 4.5) failures.push(`${preset} ${mode} ${text} on ${surface}: ${ratio}`);
+      }
+    }
+    probe.remove();
+    return failures;
+  });
+  expect(failures).toEqual([]);
+});
+
+test("mobile preset chooser uses touch-sized controls and reset previews Default", async ({ page }, testInfo) => {
+  test.skip(!isMobileProject(testInfo.project.name), "mobile behavior");
+  await page.getByRole("button", { name: "Settings" }).tap();
+  const dracula = page.getByRole("radio", { name: "Dracula" });
+  expect((await dracula.locator("..").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await dracula.check();
+  await expect(page.locator("html")).toHaveAttribute("data-theme-preset", "dracula");
+  await page.getByRole("button", { name: "Reset defaults" }).tap();
+  await expect(page.getByRole("radio", { name: "Default" })).toBeChecked();
+  await expect(page.locator("html")).toHaveAttribute("data-theme-preset", "default");
+});
+
 test("toolbar does not overflow a 320px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
@@ -374,4 +464,100 @@ test("toolbar does not overflow a 320px viewport", async ({ page }) => {
     toolbar.scrollWidth > toolbar.clientWidth,
   );
   expect(overflow).toBe(false);
+  const formatScroller = await page.locator(".format-bar-scroll").evaluate((scroller) => ({
+    scrolls: scroller.scrollWidth > scroller.clientWidth,
+    overflowX: getComputedStyle(scroller).overflowX,
+  }));
+  expect(formatScroller).toEqual({ scrolls: true, overflowX: "auto" });
+});
+
+test("desktop formats the selection from the toolbar and stays accessible", async ({ page }, testInfo) => {
+  test.skip(isMobileProject(testInfo.project.name), "desktop behavior");
+  const editor = page.getByLabel("Markdown editor");
+  await editor.fill("hello world");
+  await editor.evaluate((node: HTMLTextAreaElement) => {
+    node.focus();
+    node.setSelectionRange(0, 5);
+  });
+
+  await page.getByRole("button", { name: "Bold (Ctrl+B)" }).click();
+
+  await expect(editor).toHaveValue("**hello** world");
+  await expect(page.locator(".preview-pane strong")).toHaveText("hello");
+  expect(await editor.evaluate((node) => node === document.activeElement)).toBe(true);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((v) => ["critical", "serious"].includes(v.impact || ""))).toEqual([]);
+});
+
+test("desktop keeps a toolbar edit on the native undo stack", async ({ page }, testInfo) => {
+  test.skip(isMobileProject(testInfo.project.name), "desktop behavior");
+  const editor = page.getByLabel("Markdown editor");
+  await editor.fill("hello world");
+  await editor.evaluate((node: HTMLTextAreaElement) => {
+    node.focus();
+    node.setSelectionRange(0, 5);
+  });
+  await page.getByRole("button", { name: "Bold (Ctrl+B)" }).click();
+  await expect(editor).toHaveValue("**hello** world");
+
+  await editor.press("ControlOrMeta+z");
+
+  await expect(editor).toHaveValue("hello world");
+});
+
+test("desktop inserts a Mermaid fence that renders a diagram", async ({ page }, testInfo) => {
+  test.skip(isMobileProject(testInfo.project.name), "desktop behavior");
+  const editor = page.getByLabel("Markdown editor");
+  await editor.fill("");
+  await editor.focus();
+
+  await page.getByRole("button", { name: "Mermaid flowchart" }).click();
+
+  await expect(editor).toHaveValue("```mermaid\nflowchart LR\n  A[Start] --> B[End]\n```");
+  await expect(page.getByLabel("Mermaid diagram").locator("svg text").filter({ hasText: "Start" })).toBeVisible({ timeout: 10_000 });
+});
+
+test("desktop view-mode buttons drive and persist the pane ratio", async ({ page }, testInfo) => {
+  test.skip(isMobileProject(testInfo.project.name), "desktop behavior");
+  const separator = page.getByRole("separator", { name: "Resize editor and preview panes" });
+  const viewMode = (name: string) => page.getByRole("button", { name });
+
+  await viewMode("Editor only").click();
+  await expect(separator).toHaveAttribute("aria-valuenow", "100");
+  await expect(viewMode("Editor only")).toHaveAttribute("aria-pressed", "true");
+
+  await viewMode("Preview only").click();
+  await expect(separator).toHaveAttribute("aria-valuenow", "0");
+  await expect(page.getByRole("button", { name: "Bold (Ctrl+B)" })).toBeDisabled();
+
+  await viewMode("Split view").click();
+  await expect(separator).toHaveAttribute("aria-valuenow", "50");
+
+  await viewMode("Preview only").click();
+  await page.reload();
+  await expect(separator).toHaveAttribute("aria-valuenow", "0");
+  await expect(viewMode("Preview only")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("mobile hides the format bar in preview and keeps focus in the editor", async ({ page }, testInfo) => {
+  test.skip(!isMobileProject(testInfo.project.name), "mobile behavior");
+  const editor = page.getByLabel("Markdown editor");
+  const formatBar = page.locator(".format-bar");
+  await expect(page.getByRole("toolbar", { name: "Markdown formatting" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "View mode" })).toBeHidden();
+
+  await editor.fill("hello world");
+  await editor.evaluate((node: HTMLTextAreaElement) => {
+    node.focus();
+    node.setSelectionRange(0, 5);
+  });
+  await page.getByRole("button", { name: "Bold (Ctrl+B)" }).tap();
+
+  await expect(editor).toHaveValue("**hello** world");
+  expect(await editor.evaluate((node) => node === document.activeElement)).toBe(true);
+
+  await page.locator("label.pane-label-preview").tap();
+  await expect(formatBar).toBeHidden();
+  await page.locator("label.pane-label-edit").tap();
+  await expect(formatBar).toBeVisible();
 });

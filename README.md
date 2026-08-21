@@ -20,6 +20,10 @@ The previous web implementation remains available during the transition, but it 
 
 - Live GitHub Flavored Markdown preview
 - Mermaid diagrams rendered as you type
+- Formatting toolbar for marks, headings, lists, quotes, code, tables, links, images, and Mermaid diagrams
+- Keyboard shortcuts: `Ctrl/⌘+B` bold, `Ctrl/⌘+I` italic, `Ctrl/⌘+K` link, `Ctrl/⌘+E` inline code, and `Tab`/`Shift+Tab` to indent or outdent a multi-line selection
+- Desktop editor, split, and preview view modes that reuse the pane snap points
+- Quick light/dark switching plus six locally saved whole-application themes: Default, Gruvbox, Nord, Dracula, Solarized, and Tokyo Night. Every preset coordinates light and dark window chrome, editor/preview, dialogs, controls, code, borders, text, selection, focus, rails, and actions.
 - Native `.md` and `.markdown` Open and Export dialogs
 - Local autosave using the original MdSheep storage keys
 - Light and dark themes

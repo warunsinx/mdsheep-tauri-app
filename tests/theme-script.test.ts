@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { THEME_STORAGE_KEY } from "@/lib/constants";
+import { THEME_PRESET_STORAGE_KEY } from "@/lib/theme-presets";
 import { themeScript } from "@/lib/theme-script";
 
 describe("pre-hydration theme script", () => {
   beforeEach(() => {
+    localStorage.clear();
     document.documentElement.className = "";
     delete document.documentElement.dataset.theme;
+    delete document.documentElement.dataset.themePreset;
     document.documentElement.style.colorScheme = "";
   });
 
@@ -27,4 +30,21 @@ describe("pre-hydration theme script", () => {
     expect(document.documentElement.style.colorScheme).toBe(expected);
     vi.unstubAllGlobals();
   });
+
+  it.each([
+    { stored: { version: 1, preset: "gruvbox" }, expected: "gruvbox" },
+    { stored: { version: 2, preset: "nord" }, expected: "default" },
+    { stored: { version: 1, preset: "ocean" }, expected: "default" },
+    { stored: "broken", expected: "default" },
+  ])("applies $expected before hydration for $stored", ({ stored, expected }) => {
+    localStorage.setItem(
+      THEME_PRESET_STORAGE_KEY,
+      stored === "broken" ? stored : JSON.stringify(stored),
+    );
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false })));
+    Function(themeScript)();
+    expect(document.documentElement.dataset.themePreset).toBe(expected);
+    vi.unstubAllGlobals();
+  });
+
 });

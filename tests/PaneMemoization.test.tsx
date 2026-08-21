@@ -27,4 +27,19 @@ describe("pane memoization", () => {
 
     expect(markdownRender).toHaveBeenCalledTimes(rendersBeforeDrag);
   });
+
+  it("rerenders ReactMarkdown exactly once per format command", async () => {
+    render(<ThemeProvider><EditorLayout /></ThemeProvider>);
+    await act(() => new Promise((resolve) => window.setTimeout(resolve, 1)));
+    const editor = screen.getByRole("textbox", { name: "Markdown editor" }) as HTMLTextAreaElement;
+    fireEvent.change(editor, { target: { value: "hello world" } });
+    editor.focus();
+    editor.setSelectionRange(0, 5);
+    const rendersBeforeCommand = markdownRender.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("button", { name: "Bold (Ctrl+B)" }));
+
+    expect(editor).toHaveValue("**hello** world");
+    expect(markdownRender).toHaveBeenCalledTimes(rendersBeforeCommand + 1);
+  });
 });

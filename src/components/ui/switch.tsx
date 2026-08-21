@@ -7,7 +7,7 @@ export function Switch({ className, ...props }: ComponentProps<typeof SwitchPrim
     <SwitchPrimitive.Root
       data-slot="switch"
       className={clsx(
-        "group inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-transparent bg-neutral-300 p-0.5 shadow-inner transition-colors outline-none hover:bg-neutral-400 focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-orange-600 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:focus-visible:ring-orange-400 dark:focus-visible:ring-offset-neutral-900 dark:data-[state=checked]:bg-orange-500",
+        "switch-accent group inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-transparent bg-neutral-300 p-0.5 shadow-inner transition-colors outline-none hover:bg-neutral-400 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:focus-visible:ring-offset-neutral-900",
         className,
       )}
       {...props}

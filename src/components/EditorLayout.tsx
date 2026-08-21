@@ -9,6 +9,8 @@ import { Toolbar } from "./Toolbar";
 import { PaneResizer } from "./PaneResizer";
 import { useSettings } from "@/hooks/useSettings";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useMarkdownCommands } from "@/hooks/useMarkdownCommands";
+import { useTheme } from "@/context/ThemeContext";
 
 export function getCollapseProgress(ratio: number, pane: "editor" | "preview") {
   const distance = pane === "editor" ? ratio : 100 - ratio;
@@ -23,9 +25,12 @@ export function EditorLayout() {
   const previewRadioId = `${paneModeId}-preview`;
   const paneModeName = `${paneModeId}-pane-mode`;
   const editRadioRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
   const { ratio, setRatio, commitRatio } = usePaneSplit();
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const { settings, updateSettings, reset, save, restore } = useSettings();
+  const { preset, setPreset, savePreset, restorePreset, resetPreset } = useTheme();
+  const { runCommand, handleEditorKeyDown, handleEditorCompositionStart, handleEditorCompositionEnd } = useMarkdownCommands(editorRef, setMarkdown);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -48,10 +53,10 @@ export function EditorLayout() {
   };
 
   return (
-    <div className="flex h-dvh min-h-[420px] flex-col overflow-hidden bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50">
+    <div className="app-shell flex h-dvh min-h-[420px] flex-col overflow-hidden">
       <input ref={editRadioRef} id={editRadioId} className="pane-mode-edit sr-only" type="radio" name={paneModeName} aria-label="Edit" defaultChecked />
       <input id={previewRadioId} className="pane-mode-preview sr-only" type="radio" name={paneModeName} aria-label="Preview" />
-      <Toolbar markdown={markdown} editRadioId={editRadioId} previewRadioId={previewRadioId} onOpen={handleOpen} settings={settings} onSettingsChange={updateSettings} onSettingsReset={reset} onSettingsSave={save} onSettingsCancel={restore} />
+      <Toolbar markdown={markdown} editRadioId={editRadioId} previewRadioId={previewRadioId} onOpen={handleOpen} settings={settings} onSettingsChange={updateSettings} onSettingsReset={() => { reset(); resetPreset(); }} onSettingsSave={() => save(savePreset)} onSettingsCancel={() => { restore(); restorePreset(); }} onCommand={runCommand} formattingDisabled={isDesktop && ratio === 0} ratio={ratio} onRatioSelect={commitRatio} preset={preset} onPresetChange={setPreset} />
       <main
         className={`pane-layout min-h-0 flex-1${isDesktop && ratio === 0 ? " pane-layout-editor-collapsed" : ""}${isDesktop && ratio === 100 ? " pane-layout-preview-collapsed" : ""}`}
         style={{
@@ -60,7 +65,7 @@ export function EditorLayout() {
           "--preview-collapse-progress": previewCollapseProgress,
         } as CSSProperties}
       >
-        <EditorPane value={markdown} onChange={setMarkdown} settings={settings} collapsed={isDesktop && ratio === 0} onReopen={reopenEditor} onExpand={isDesktop ? expandEditor : undefined} />
+        <EditorPane value={markdown} onChange={setMarkdown} settings={settings} collapsed={isDesktop && ratio === 0} onReopen={reopenEditor} onExpand={isDesktop ? expandEditor : undefined} textareaRef={editorRef} onKeyDown={handleEditorKeyDown} onCompositionStart={handleEditorCompositionStart} onCompositionEnd={handleEditorCompositionEnd} />
         <PaneResizer ratio={ratio} onChange={setRatio} onCommit={commitRatio} />
         <PreviewPane markdown={markdown} fontSize={settings.previewFontSize} collapsed={isDesktop && ratio === 100} onReopen={reopenPreview} onExpand={isDesktop ? expandPreview : undefined} />
       </main>

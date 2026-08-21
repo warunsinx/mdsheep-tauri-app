@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { EditorLayout } from "@/components/EditorLayout";
 import { ThemeProvider } from "@/context/ThemeContext";
 
@@ -130,6 +130,93 @@ describe("Settings dialog", () => {
     await user.click(screen.getByRole("button", { name: "Reset defaults" }));
     expect(editorSize).toHaveValue(16);
     expect(screen.getByRole("switch", { name: "Word wrap" })).toBeChecked();
+    expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "16px" });
+  });
+
+  it("offers an accessible six-preset chooser with native keyboard selection", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    const chooser = screen.getByRole("radiogroup", { name: "Theme preset" });
+    expect(chooser).toBeInTheDocument();
+    expect(within(chooser).getAllByRole("radio")).toHaveLength(6);
+    expect(screen.getByRole("radio", { name: "Default" })).toBeChecked();
+    const gruvbox = screen.getByRole("radio", { name: "Gruvbox" });
+    gruvbox.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("radio", { name: "Nord" })).toBeChecked();
+    expect(document.documentElement.dataset.themePreset).toBe("nord");
+  });
+
+  it("saves, cancels, and resets whole-theme changes transactionally", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("radio", { name: "Gruvbox" }));
+    await user.keyboard("{Escape}");
+    expect(document.documentElement.dataset.themePreset).toBe("default");
+    expect(localStorage.getItem("md-editor:theme-preset:v1")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("radio", { name: "Dracula" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(JSON.parse(localStorage.getItem("md-editor:theme-preset:v1")!)).toEqual({ version: 1, preset: "dracula" });
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("button", { name: "Reset defaults" }));
+    expect(screen.getByRole("radio", { name: "Default" })).toBeChecked();
+    expect(document.documentElement.dataset.themePreset).toBe("default");
+    await user.keyboard("{Escape}");
+    expect(document.documentElement.dataset.themePreset).toBe("dracula");
+  });
+
+  it("keeps both snapshots uncommitted when settings storage rejects Save", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    const originalSetItem = Storage.prototype.setItem;
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === "md-editor:settings:v1") throw new Error("quota");
+      return originalSetItem.call(this, key, value);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Editor font size" }), { key: "ArrowRight" });
+    await user.click(screen.getByRole("radio", { name: "Nord" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    setItem.mockRestore();
+
+    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
+    expect(localStorage.getItem("md-editor:settings:v1")).toBeNull();
+    expect(localStorage.getItem("md-editor:theme-preset:v1")).toBeNull();
+    await user.keyboard("{Escape}");
+    expect(document.documentElement.dataset.themePreset).toBe("default");
+    expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "16px" });
+  });
+
+  it("keeps the last committed preset when storage rejects a later save", async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    await user.click(screen.getByRole("radio", { name: "Dracula" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    const originalSetItem = Storage.prototype.setItem;
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key, value) {
+      if (key === "md-editor:theme-preset:v1") throw new Error("quota");
+      return originalSetItem.call(this, key, value);
+    });
+    const previousSettings = localStorage.getItem("md-editor:settings:v1");
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.keyDown(screen.getByRole("slider", { name: "Editor font size" }), { key: "ArrowRight" });
+    await user.click(screen.getByRole("radio", { name: "Gruvbox" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    setItem.mockRestore();
+
+    expect(screen.getByRole("dialog", { name: "Settings" })).toBeInTheDocument();
+    expect(localStorage.getItem("md-editor:settings:v1")).toBe(previousSettings);
+    expect(JSON.parse(localStorage.getItem("md-editor:theme-preset:v1")!)).toEqual({ version: 1, preset: "dracula" });
+    await user.keyboard("{Escape}");
+    expect(document.documentElement.dataset.themePreset).toBe("dracula");
     expect(screen.getByRole("textbox", { name: "Markdown editor" })).toHaveStyle({ fontSize: "16px" });
   });
 });

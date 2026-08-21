@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, type CompositionEventHandler, type KeyboardEventHandler, type RefObject } from "react";
 import { LINE_HEIGHT_VALUES, type EditorSettings } from "@/lib/settings";
 
 interface EditorPaneProps {
@@ -8,11 +8,15 @@ interface EditorPaneProps {
   collapsed?: boolean;
   onReopen?: () => void;
   onExpand?: () => void;
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
+  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>;
+  onCompositionStart?: CompositionEventHandler<HTMLTextAreaElement>;
+  onCompositionEnd?: CompositionEventHandler<HTMLTextAreaElement>;
 }
 
-export const EditorPane = memo(function EditorPane({ value, onChange, settings, collapsed = false, onReopen, onExpand }: EditorPaneProps) {
+export const EditorPane = memo(function EditorPane({ value, onChange, settings, collapsed = false, onReopen, onExpand, textareaRef, onKeyDown, onCompositionStart, onCompositionEnd }: EditorPaneProps) {
   return (
-    <section id="edit-panel" aria-label="Markdown source" className={`editor-pane flex min-h-0 flex-1 flex-col bg-neutral-50/50 dark:bg-neutral-950${collapsed ? " pane-collapsed" : ""}`}>
+    <section id="edit-panel" aria-label="Markdown source" className={`editor-pane flex min-h-0 flex-1 flex-col${collapsed ? " pane-collapsed" : ""}`}>
       <div className={`pane-content-shell${collapsed ? " pane-content-shell-collapsed" : ""}`} aria-hidden={collapsed}>
         {onExpand ? (
           <button type="button" className="pane-heading pane-heading-button" aria-label="Expand Markdown pane" onClick={onExpand}>
@@ -23,14 +27,18 @@ export const EditorPane = memo(function EditorPane({ value, onChange, settings, 
         <textarea
           id="markdown-editor"
           data-pane-content="editor"
+          ref={textareaRef}
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
+          onCompositionStart={onCompositionStart}
+          onCompositionEnd={onCompositionEnd}
 
           tabIndex={collapsed ? -1 : undefined}
           spellCheck={settings.spellcheck}
           wrap={settings.wordWrap ? "soft" : "off"}
           style={{ fontSize: `${settings.editorFontSize}px`, lineHeight: LINE_HEIGHT_VALUES[settings.lineHeight], overflowX: settings.wordWrap ? "hidden" : "auto" }}
-          className="editor-scroll min-h-0 flex-1 resize-none bg-transparent px-5 py-6 font-mono text-neutral-800 caret-orange-600 outline-none placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-600 md:px-8 dark:text-neutral-200"
+          className="editor-scroll min-h-0 flex-1 resize-none bg-transparent px-5 py-6 font-mono outline-none md:px-8"
         />
       </div>
       <button type="button" className="pane-rail pane-rail-left" aria-label={collapsed ? "Reopen Markdown editor" : undefined} onClick={onReopen}>
