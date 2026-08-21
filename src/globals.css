@@ -397,4 +397,27 @@ body,.app-shell { background:var(--app-bg);color:var(--text-primary) }.editor-to
 .theme-prose :where(ul, ol) > li::marker { color: var(--text-muted); }
 .theme-prose :where(hr) { color: var(--border); }
 
+.export-menu-root { position:relative; }
+.export-menu { position:absolute; z-index:70; top:calc(100% + .45rem); right:0; width:min(19rem,calc(100vw - 1rem)); overflow:hidden; border:1px solid var(--border); border-radius:.65rem; background:var(--elevated-bg); color:var(--text-primary); box-shadow:0 16px 40px rgb(0 0 0/.22); padding:.3rem; }
+.export-menu [role="menuitem"] { display:flex; min-height:44px; width:100%; align-items:center; gap:.7rem; border:0; border-radius:.45rem; background:transparent; padding:.55rem .7rem; color:inherit; text-align:left; }
+.export-menu [role="menuitem"]:hover,.export-menu [role="menuitem"]:focus-visible { background:var(--subtle-bg); outline:none; }
+.export-menu [role="menuitem"]:focus-visible { box-shadow:inset 0 0 0 2px var(--focus); }
+.export-menu [role="menuitem"]>span { display:flex; min-width:0; flex-direction:column; }
+.export-menu strong { font-size:.8125rem; }
+.export-menu small { color:var(--text-muted); font-size:.7rem; }
+
+@media print {
+  @page { margin:16mm; }
+  html,body,.app-shell { height:auto!important; min-height:0!important; overflow:visible!important; background:#fff!important; color:#171717!important; }
+  .editor-toolbar,.editor-pane,.pane-resizer,.pane-heading,.pane-rail { display:none!important; }
+  main.pane-layout,.preview-pane,.preview-pane .pane-content-shell,.preview-scroll { display:block!important; position:static!important; width:auto!important; height:auto!important; min-height:0!important; overflow:visible!important; visibility:visible!important; opacity:1!important; }
+  main.pane-layout { grid-template-columns:1fr!important; transition:none!important; }
+  .preview-pane { background:#fff!important; color:#171717!important; }
+  .preview-pane::after { display:none!important; }
+  .preview-scroll { padding:0!important; }
+  .theme-prose { max-width:none!important; color:#171717!important; font-size:11pt!important; }
+  .theme-prose :where(p,li,h1,h2,h3,h4,h5,h6,strong) { color:#171717!important; }
+  .theme-prose a { color:#171717!important; text-decoration:underline; }
+}
+
 @media(max-width:639px){.theme-preset-chooser{grid-template-columns:repeat(2,minmax(0,1fr))}.theme-preset-option{min-height:48px}}

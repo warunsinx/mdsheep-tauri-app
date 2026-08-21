@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
-import { openMarkdownFile, saveMarkdownFile } from "@/lib/native-fs";
+import { openMarkdownFile, saveHtmlFile, saveMarkdownFile } from "@/lib/native-fs";
 
 vi.mock("@tauri-apps/plugin-dialog", () => ({
   open: vi.fn(),
@@ -41,6 +41,28 @@ describe("browser Markdown file operations", () => {
     expect(anchor.href).toBe("blob:mdsheep-export");
     expect(anchorClick).toHaveBeenCalledOnce();
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:mdsheep-export");
+  });
+
+  it("downloads standalone HTML with the correct browser filename and MIME type", async () => {
+    const anchor = document.createElement("a");
+    const anchorClick = vi.spyOn(anchor, "click").mockImplementation(() => undefined);
+    const createElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tagName: string, options?: ElementCreationOptions) =>
+      tagName.toLowerCase() === "a" ? anchor : createElement(tagName, options),
+    );
+    const createObjectURL = vi.fn((blob: Blob) => {
+      void blob;
+      return "blob:mdsheep-html-export";
+    });
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal("URL", { createObjectURL, revokeObjectURL });
+
+    await expect(saveHtmlFile("<!doctype html>", new Date(2026, 7, 18))).resolves.toBe(true);
+
+    expect(anchor.download).toBe("document-2026-08-18.html");
+    expect((createObjectURL.mock.calls[0][0] as Blob).type).toBe("text/html;charset=utf-8");
+    expect(anchorClick).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:mdsheep-html-export");
   });
 
   it("opens a selected Markdown file in a browser outside Tauri", async () => {

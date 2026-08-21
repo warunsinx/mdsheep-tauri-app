@@ -3,6 +3,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 
 const MARKDOWN_FILTERS = [{ name: "Markdown", extensions: ["md", "markdown"] }];
+const HTML_FILTERS = [{ name: "HTML", extensions: ["html", "htm"] }];
 
 export interface OpenedFile { name: string; content: string }
 export interface NativeTestState {
@@ -23,12 +24,16 @@ export function defaultExportName(date = new Date()) {
   return `document-${dateStamp(date)}.md`;
 }
 
+export function defaultHtmlExportName(date = new Date()) {
+  return `document-${dateStamp(date)}.html`;
+}
+
 function isTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-function downloadMarkdownFile(markdown: string, filename: string) {
-  const url = URL.createObjectURL(new Blob([markdown], { type: "text/markdown;charset=utf-8" }));
+function downloadTextFile(content: string, filename: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
@@ -87,7 +92,7 @@ export async function openMarkdownFile(): Promise<OpenedFile | null> {
 export async function saveMarkdownFile(markdown: string, date = new Date()): Promise<boolean> {
   const state = globalThis.__MDSHEEP_TEST_STATE__;
   if (!state && !isTauriRuntime()) {
-    downloadMarkdownFile(markdown, defaultExportName(date));
+    downloadTextFile(markdown, defaultExportName(date), "text/markdown;charset=utf-8");
     return true;
   }
 
@@ -95,5 +100,19 @@ export async function saveMarkdownFile(markdown: string, date = new Date()): Pro
   if (!path) return false;
   if (state) state.written.push({ path, content: markdown });
   else await writeTextFile(path, markdown);
+  return true;
+}
+
+export async function saveHtmlFile(html: string, date = new Date()): Promise<boolean> {
+  const state = globalThis.__MDSHEEP_TEST_STATE__;
+  if (!state && !isTauriRuntime()) {
+    downloadTextFile(html, defaultHtmlExportName(date), "text/html;charset=utf-8");
+    return true;
+  }
+
+  const path = state ? state.saveResult : await save({ defaultPath: defaultHtmlExportName(date), filters: HTML_FILTERS });
+  if (!path) return false;
+  if (state) state.written.push({ path, content: html });
+  else await writeTextFile(path, html);
   return true;
 }
